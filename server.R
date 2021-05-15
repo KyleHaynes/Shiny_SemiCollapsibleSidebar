@@ -21,15 +21,15 @@ library(generator)
 app = shinyApp(
  ui =
  fluidPage(
-   sidebarLayout(
-     sidebarPanel(width = 1, # HTML("This button will open Panel 1 using <code>updateCollapse</code>."),
-                  actionButton("p1Button", "Push Me!") #,
-                #   selectInput("styleSelect", "Select style for Panel 1",
-                #    c("default", "primary", "danger", "warning", "info", "success"))
-     ),
+#    sidebarLayout(
+#      sidebarPanel(width = 1, # HTML("This button will open Panel 1 using <code>updateCollapse</code>."),
+#                   actionButton("p1Button", "Push Me!") #,
+#                 #   selectInput("styleSelect", "Select style for Panel 1",
+#                 #    c("default", "primary", "danger", "warning", "info", "success"))
+#      ),
      mainPanel(
        bsCollapse(id = "collapseExample", multiple = T, #open = "Panel 2",
-                  bsCollapsePanel("Panel 1", "This is a panel with just text ",
+                  bsCollapsePanel("Search", "This is a panel with just text ",
                     "and has the default style. You can change the style in ",
                     "the sidebar.", style = "info"
                     # ---- Subset Vars ----
@@ -39,32 +39,41 @@ app = shinyApp(
                     
                     # ---- First search
                     , fluidRow(
-                        column(1,
-                        selectInput("var_1", NULL, names(d), selected = names(d)[1], multiple = T, width = "200px")
+                        column(2,
+                        selectInput("var_1", NULL, names(d), selected = names(d)[1], multiple = T)
                         ),
-                        column(10, # offset = 4,
+                        column(2, # offset = 4,
                         textInput("val_1", NULL, value = "", width = NULL, placeholder = NULL)
+                        ),
+                        column(3, # offset = 4,
+                        textOutput("results_1")
                         )      
                     )
 
                     # ---- Second search
                     , fluidRow(
-                        column(1,
-                        selectInput("var_2", NULL, names(d), selected = names(d)[2], multiple = T, width = "200px")
+                        column(2,
+                        selectInput("var_2", NULL, names(d), selected = names(d)[2], multiple = T)
                         ),
                         column(2, # offset = 4,
                         textInput("val_2", NULL, value = "", width = NULL, placeholder = NULL)
-                        )      
+                        ),
+                        column(3, # offset = 4,
+                        textOutput("results_2")  
+                        )    
                     )
 
                     # ---- Third search
                     , fluidRow(
-                        column(1,
-                        selectInput("var_3", NULL, names(d), selected = names(d)[3], multiple = T, width = "200px")
+                        column(2,
+                        selectInput("var_3", NULL, names(d), selected = names(d)[3], multiple = T)
                         ),
                         column(2, # offset = 4,
                         textInput("val_3", NULL, value = "", width = NULL, placeholder = NULL)
-                        )      
+                        ),
+                        column(3, # offset = 4,
+                        textOutput("results_3")  
+                        )    
                     )
 
                     , textInput("threshold", "Threshold:", value = "1", width = NULL, placeholder = NULL)
@@ -72,26 +81,26 @@ app = shinyApp(
 
                     # End of panel 1 
                   ),
-                  bsCollapsePanel("Panel 2", "This panel has a generic plot. ", "and a 'success' style.", 
+                  bsCollapsePanel("Results", "This panel has a generic plot. ", "and a 'success' style.", 
                    # Panel two shit                  
                   DT::dataTableOutput("mytable")
        )
      )
    )
- )),
+ ),
  server =
  function(input, output, session) {
-   output$genericPlot <- renderPlot(plot(rnorm(100)))
-   observeEvent(input$p1Button, ({
-     updateCollapse(session, "collapseExample", open = "Panel 1")
-   }))
-   observeEvent(input$styleSelect, ({
-     updateCollapse(session, "collapseExample", style = list("Panel 1" = input$styleSelect))
-   }))
+#    output$genericPlot <- renderPlot(plot(rnorm(100)))
+#    observeEvent(input$p1Button, ({
+#      updateCollapse(session, "collapseExample", open = "Panel 1")
+#    }))
+#    observeEvent(input$styleSelect, ({
+#      updateCollapse(session, "collapseExample", style = list("Panel 1" = input$styleSelect))
+#    }))
    
-   observeEvent(input$styleSelect, ({
-     updateCollapse(session, "collapseExample", style = list("Panel 1" = input$styleSelect))
-   }))
+#    observeEvent(input$styleSelect, ({
+#      updateCollapse(session, "collapseExample", style = list("Panel 1" = input$styleSelect))
+#    }))
 
     
     observeEvent(input$action, {
@@ -100,25 +109,31 @@ app = shinyApp(
         d[, l := F]
 
         if(input$val_1 != ""){
-            cnt_1 <- c()
+            res_1 <- c()
             for(i in 1:length(input$var_1)){
-                browser()
-                d[, l := l + (x <<- (eval(as.name(input$var_1)) %ilike% input$val_1))]
-                cnt_1 <- c(cnt_1, sum(x))
+                # browser()
+                d[, l := l + (tmp <<- (eval(as.name(input$var_1[i])) %ilike% input$val_1))]
+                res_1 <- c(res_1, sum(tmp))
             }
-            output$results_1 <- renderText({as.character(paste(cnt_1, collapse = ", "))})
+            output$results_1 <- renderText({as.character(paste(res_1, collapse = ", "))})
         }
 
         if(input$val_2 != ""){
+            res_2 <- c()
             for(i in 1:length(input$var_2)){
-                d[, l := l + (eval(as.name(input$var_2)) %ilike% input$val_2)]
+                d[, l := l + (tmp <<- (eval(as.name(input$var_2[i])) %ilike% input$val_2))]
+                res_2 <- c(res_2, sum(tmp))
             }
+            output$results_2 <- renderText({as.character(paste(res_2, collapse = ", "))})
         }
 
         if(input$val_3 != ""){
+            res_3 <- c()
             for(i in 1:length(input$var_3)){
-                d[, l := l + (eval(as.name(input$var_3)) %ilike% input$val_3)]
+                d[, l := l + (tmp <<- (eval(as.name(input$var_3[i])) %ilike% input$val_3))]
+                res_3 <- c(res_3, sum(tmp))
             }
+            output$results_3 <- renderText({as.character(paste(res_3, collapse = ", "))})
         }
 
 
